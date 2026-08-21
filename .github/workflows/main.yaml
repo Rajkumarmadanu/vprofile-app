@@ -19,6 +19,10 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: check java
+        run: java -version
+          echo $JAVA_VERSION
+
       - name: Maven Test
         run: mvn test
 
@@ -38,7 +42,7 @@ jobs:
           -Dsonar.junit.reportsPath=target/surefire-reports/
           -Dsonar.jacoco.reportsPath=target/jacoco.exec
           -Dsonar.java.checkstyle.reportsPath=target/checkstyle-result.xml
-          -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controller/
+          -Dsonar.java.binaries=target/test-classes
 
       - name: sonarQube quality gate
         id: sonarqube-quality-gate-check
