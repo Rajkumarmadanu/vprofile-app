@@ -19,11 +19,11 @@ jobs:
       - name: checkstyle
         run: mvn checkstyle:checkstyle
 
-      - name: set java 11
+      - name: set java 21
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '21'
 
       - name: set sonarqube
         uses: warchant/setup-sonar-scanner@v7
