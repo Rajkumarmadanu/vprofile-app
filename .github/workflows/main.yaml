@@ -55,19 +55,34 @@ jobs:
   BUILD_AND_PUBLISH:
     needs: Testing
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-2
+      ECR_REPOSITORY: vprofileapp
     steps:
+      # Step 1: Force a clean, non-cached fetch of your code
       - name: Code checkout
         uses: actions/checkout@v4
-
-      - name: upload image to ECR
-        uses: appleboy/docker-ecr-action@master
         with:
-          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          registry: ${{ secrets.REGISTRY }}
-          repo: ${{ env.ECR_REPOSITORY }}
-          region: ${{ env.AWS_REGION }}
-          tags: latest,${{github.run_number}}
-          daemon_off: false
-          dockerfile: ./Dockerfile
-          context: ./
+          clean: true
+        
+      # Step 2: Log into AWS natively using repository secrets
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 3: Authenticate the native Docker client with your private ECR registry
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step 4: Build fresh using your exact file system content and push directly
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build --no-cache -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ github.run_number }} -f ./Dockerfile .
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ github.run_number }}
