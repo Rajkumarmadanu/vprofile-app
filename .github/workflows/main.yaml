@@ -1,10 +1,12 @@
 name: vprofile actions
-on: workflow_dispatch
+
+on:
+  workflow_dispatch:
+
 env:
   AWS_REGION: us-east-2
   ECR_REPOSITORY: vprofileapp
   EKS_CLUSTER_NAME: vprofile-eks
-
 
 jobs:
   Testing:
@@ -32,9 +34,12 @@ jobs:
         run: mvn checkstyle:checkstyle
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v7
-            -Dsonar.host.url=${{ secrets.SONAR_URL }}
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
+        with:
+          args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=src/
@@ -45,7 +50,7 @@ jobs:
 
       - name: SonarQube Quality Gate
         id: sonarqube-quality-gate-check
-        uses: sonarsource/sonarqube-quality-gate-action@master
+        uses: SonarSource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
